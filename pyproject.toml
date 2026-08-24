@@ -20,9 +20,6 @@ data = [
 # dev dependencies are installed during development but no for package
 [dependency-groups]
 
-# dependencies needed to build package
-build = ["twine", "build"]
-
 # dependencies needed to lint and run tests
 dev = [
     "pytest",
