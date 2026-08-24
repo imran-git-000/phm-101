@@ -1,0 +1,49 @@
+[project]
+name = "phm-101"
+version = "0.1.0"
+description = "Repository to learn solve phm tasks."
+readme = "README.md"
+authors = [
+    { name = "imran-git-000", email = "chouybat@umd.edu" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+# optional grouped dependencies that are installed only when explicitly requested
+[project.optional-dependencies]
+
+data = [
+    # "polars==1.13.1"
+]
+
+
+# dev dependencies are installed during development but no for package
+[dependency-groups]
+
+# dependencies needed to build package
+build = ["twine", "build"]
+
+# dependencies needed to lint and run tests
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-asyncio",
+    "pytest-xdist[psutil]",
+    "ruff",
+    "ty",
+]
+
+
+[project.scripts]
+phm-101 = "phm_101:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.uv]
+exclude-newer = "7 days"
