@@ -16,3 +16,11 @@ CHANNELS: dict[ImsTests, list[str]] = {
 }
 
 N_SAMPLES = 20480
+
+
+def test_of(channel: str) -> ImsTests:
+    """The test a channel belongs to."""
+    for test, channels in CHANNELS.items():
+        if channel in channels:
+            return test
+    raise ValueError(f'unknown channel: {channel}')

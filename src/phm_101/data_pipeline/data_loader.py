@@ -5,7 +5,7 @@ import pyarrow.parquet as pq
 from loguru import logger
 
 from phm_101.data_types.models import ChannelData
-from phm_101.utils.ims import CHANNELS, N_SAMPLES
+from phm_101.utils.ims import N_SAMPLES, test_of
 
 
 class DataLoader:
@@ -66,12 +66,9 @@ class DataLoader:
         )
 
         # clean: keep only snapshots recorded before rig shutdown
-        test_dir_name = next(
-            test_dir.value
-            for test_dir, channels in CHANNELS.items()
-            if channel in channels
+        keep = timestamps <= np.datetime64(
+            self.valid_end[test_of(channel).value]
         )
-        keep = timestamps <= np.datetime64(self.valid_end[test_dir_name])
         timestamps, signals = timestamps[keep], signals[keep]
 
         # label: faulty from the onset timestamp onwards

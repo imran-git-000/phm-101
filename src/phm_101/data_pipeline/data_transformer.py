@@ -5,6 +5,7 @@ from loguru import logger
 
 from phm_101.data_types.enums import ImsTests
 from phm_101.data_types.models import ChannelData, ChannelSplit
+from phm_101.utils.ims import test_of
 
 
 class DataTransformer:
@@ -26,7 +27,7 @@ class DataTransformer:
 
     def train_test_split(self, data: ChannelData) -> ChannelSplit:
         """Healthy head is train + val, everything after is test."""
-        cutoff = np.datetime64(self.train_end[ImsTests(data.channel)])
+        cutoff = np.datetime64(self.train_end[test_of(data.channel)])
         n_healthy = int((data.timestamps < cutoff).sum())
         n_train = n_healthy - int(n_healthy * self.val_fraction)
 
