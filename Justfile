@@ -7,6 +7,11 @@ REPOSITORY_NAME := "phm-101"
 default:
     just --list
 
+# == USEFUL COMMANDS
+
+to-parquet:
+    uv run scripts/build_raw_parquet.py
+
 # == SETUP REPOSITORY AND DEPENDENCIES
 
 # Install the repository git hooks into .git/hooks.
@@ -33,7 +38,7 @@ setup: set-hooks dev-sync
 
 # Format source and test files with Ruff.
 format:
-    uv run ruff format {{src_dir}}
+    uv run ruff format {{src_dir}} scripts tests
 
 # Check whether formatting changes would be required.
 format-on-commit:
@@ -43,6 +48,10 @@ format-on-commit:
 lint:
     uv run ruff check {{src_dir}} --fix
     uv run ty check {{src_dir}}
+    uv run ruff check scripts --fix
+    uv run ty check scripts
+    uv run ruff check tests --fix
+    uv run ty check tests
 
 # Run non-mutating lint and type checks.
 lint-on-push:

@@ -10,6 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "dotenv>=0.9.9",
     "ipykernel>=7.3.0",
+    "loguru>=0.7.3",
     "matplotlib>=3.11.1",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
