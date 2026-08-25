@@ -18,13 +18,13 @@ set-hooks:
     cp .hooks/post-merge .git/hooks/post-merge
     chmod +x .git/hooks/post-merge
 
-# Create or update the virtual environment. The project is relocked before syncing. This installs all extras and the development group (excluding the build group)
+# Create or update the virtual environment. The project is relocked before syncing. This installs all extras and the development group.
 dev-sync:
-    uv sync --cache-dir .uv_cache --all-extras --no-group build
+    uv sync --cache-dir .uv_cache --all-extras
 
 # Sync environment as in dev-sync but also refreshes a package, which might be a local version.
 dev-sync-refresh-package lib:
-    uv sync --cache-dir .uv_cache --all-extras --no-group build --refresh-package {{lib}} --refresh-install {{lib}}
+    uv sync --cache-dir .uv_cache --all-extras --refresh-package {{lib}} --refresh-install {{lib}}
 
 # Install hooks and sync the development environment.
 setup: set-hooks dev-sync

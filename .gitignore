@@ -129,3 +129,6 @@ dmypy.json
 *.DS_Store
 
 build/*
+
+# Extracted feature tables and caches (rebuildable from DATA_ROOT)
+data/

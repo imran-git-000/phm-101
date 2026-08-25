@@ -7,7 +7,15 @@ authors = [
     { name = "imran-git-000", email = "chouybat@umd.edu" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "dotenv>=0.9.9",
+    "ipykernel>=7.3.0",
+    "matplotlib>=3.11.1",
+    "numpy>=2.5.2",
+    "pandas>=3.0.5",
+    "pyarrow>=25.0.1",
+    "tqdm>=4.70.0",
+]
 
 # optional grouped dependencies that are installed only when explicitly requested
 [project.optional-dependencies]
@@ -31,9 +39,6 @@ dev = [
     "ty",
 ]
 
-
-[project.scripts]
-phm-101 = "phm_101:main"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
