@@ -16,3 +16,12 @@ class ChannelData:
 
     def __len__(self) -> int:
         return len(self.timestamps)
+
+
+@dataclass
+class ChannelSplit:
+    """Chronological split of one channel. Train and val are healthy only."""
+
+    train: ChannelData
+    val: ChannelData
+    test: ChannelData
