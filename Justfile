@@ -10,7 +10,7 @@ default:
 # == USEFUL COMMANDS
 
 to-parquet:
-    uv run scripts/build_raw_parquet.py
+    uv run scripts/save_raw_parquet.py
 
 # == SETUP REPOSITORY AND DEPENDENCIES
 
