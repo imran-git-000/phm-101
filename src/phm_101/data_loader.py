@@ -72,11 +72,11 @@ class DataLoader:
             't3b4': None,
         }
 
-        # last usable snapshot: later ones are recorded during rig shutdown
+        # last snapshot to keep
         self.valid_end: dict[str, str] = {
             '1st_test': '2003-11-25 23:39:56',
-            '2nd_test': '2004-02-19 06:02:39',
-            '3rd_test': '2004-04-18 02:32:55',
+            '2nd_test': '2004-02-19 06:22:39',
+            '3rd_test': '2004-04-18 02:42:55',
         }
 
     def save(self) -> None:
