@@ -46,7 +46,7 @@ class Evaluator:
         self.model.eval()
         errors, snapshots, labels = [], [], []
         for windows, batch_labels, batch_snapshots in dataloader:
-            batch = windows.unsqueeze(1).to(self.device)
+            batch = windows.to(self.device)
             reconstruction = self.model(batch)
             errors.append(
                 ((reconstruction - batch) ** 2).mean(dim=(1, 2)).cpu().numpy()

@@ -34,8 +34,7 @@ class Trainer:
         self.model.train()
         total = 0.0
         for windows, _, _ in dataloader:
-            # (batch, window_size) -> (batch, 1, window_size) for Conv1d
-            batch = windows.unsqueeze(1).to(self.device)
+            batch = windows.to(self.device)
             loss = self.loss_fn(self.model(batch), batch)
             self.optimizer.zero_grad()
             loss.backward()
@@ -53,7 +52,7 @@ class Trainer:
         self.model.eval()
         total = 0.0
         for windows, _, _ in dataloader:
-            batch = windows.unsqueeze(1).to(self.device)
+            batch = windows.to(self.device)
             total += self.loss_fn(self.model(batch), batch).item()
         return total / len(dataloader)
 
