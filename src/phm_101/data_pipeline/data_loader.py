@@ -75,8 +75,13 @@ class DataLoader:
         # num_workers > 0 pickles the dataset once per worker, which
         # materialises the window view. Keep it at 0 unless hop is large.
         self.num_workers = num_workers
+        # the loader pins on a separate thread only when num_workers > 0; at
+        # 0 it pins on the main thread, which costs more than the faster
+        # transfer saves for windows this small
         self.pin_memory = (
-            torch.cuda.is_available() if pin_memory is None else pin_memory
+            (num_workers > 0 and torch.cuda.is_available())
+            if pin_memory is None
+            else pin_memory
         )
         self.seed = seed
 
@@ -113,4 +118,7 @@ class DataLoader:
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             generator=generator,
+            # both are rejected outright when there are no workers
+            persistent_workers=self.num_workers > 0,
+            prefetch_factor=2 if self.num_workers else None,
         )

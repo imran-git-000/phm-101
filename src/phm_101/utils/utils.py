@@ -5,9 +5,7 @@ import torch
 from loguru import logger
 
 
-def save_model(
-    model: torch.nn.Module, target_dir: str, model_name: str
-) -> None:
+def save_model(model: torch.nn.Module, model_name: str) -> None:
     """Saves a PyTorch model to a target directory.
 
     Args:
@@ -22,7 +20,7 @@ def save_model(
                  model_name="05_going_modular_tingvgg_model.pth")
     """
     # Create target directory
-    target_dir_path = Path(target_dir)
+    target_dir_path = Path('model_weights')
     target_dir_path.mkdir(parents=True, exist_ok=True)
 
     # Create model save path

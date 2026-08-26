@@ -40,7 +40,10 @@ class Trainer:
     def train_step(self, dataloader: TorchDataLoader) -> float:
         """One epoch of training. Returns the mean reconstruction loss."""
         self.model.train()
-        total, n_windows = 0.0, 0
+        # the running sum stays on the device: reading it every batch would
+        # sync the host and stall the next batch's loading
+        total = torch.zeros((), device=self.device)
+        n_windows = 0
         for windows, _, _ in dataloader:
             # compute prediction and loss
             batch: Tensor = windows.to(self.device, non_blocking=True)
@@ -52,22 +55,23 @@ class Trainer:
             self.optimizer.zero_grad()
 
             # weight by batch size: a partial last batch must count for less
-            total += loss.item() * batch.shape[0]
+            total += loss.detach() * batch.shape[0]
             n_windows += batch.shape[0]
-        return total / n_windows
+        return float(total) / n_windows
 
     @torch.inference_mode()
     def val_step(self, dataloader: TorchDataLoader) -> float:
         """One pass over held-out healthy windows. Returns the mean loss."""
         self.model.eval()
-        total, n_windows = 0.0, 0
+        total = torch.zeros((), device=self.device)
+        n_windows = 0
         for windows, _, _ in dataloader:
             batch: Tensor = windows.to(self.device, non_blocking=True)
             loss: Tensor = self.loss_fn(self.model(batch), batch)
             # weight by batch size: eval loaders keep their partial batch
-            total += loss.item() * batch.shape[0]
+            total += loss * batch.shape[0]
             n_windows += batch.shape[0]
-        return total / n_windows
+        return float(total) / n_windows
 
     def train(
         self,
