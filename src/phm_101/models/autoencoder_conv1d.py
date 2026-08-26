@@ -80,6 +80,7 @@ class ConvAutoencoder1d(nn.Module):
     def _block(
         self, conv: nn.Module, out_channels: int, final: bool = False
     ) -> list[nn.Module]:
+        """Conv block made of conv, batch norm, ReLU, and dropout. The last block has no batch norm, ReLU, or dropout."""
         if final:
             return [conv]
         layers: list[nn.Module] = [conv]

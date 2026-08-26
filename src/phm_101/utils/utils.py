@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 
 import torch
@@ -31,3 +32,15 @@ def save_model(
     # Save the model state_dict()
     logger.info('Saving model to: {path}', path=model_save_path)
     torch.save(obj=model.state_dict(), f=model_save_path)
+
+
+def set_seed(seed: int) -> None:
+    """Seed python and torch so a run can be reproduced.
+
+    Call this *before* building the model: a module initialises its weights
+    in its constructor, so seeding afterwards leaves them unreproducible.
+    torch.manual_seed covers the CUDA devices as well. Nothing here draws
+    from numpy's global RNG; use np.random.default_rng(seed) if that changes.
+    """
+    random.seed(seed)
+    torch.manual_seed(seed)

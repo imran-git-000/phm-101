@@ -1,12 +1,14 @@
 import copy
+import math
 from typing import TYPE_CHECKING
 
 import torch
 from loguru import logger
-from torch import nn
+from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from phm_101.data_types.models import TrainConfig
+from phm_101.data_types.models import TrainConfig, TrainResult
+from phm_101.utils.utils import set_seed
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader as TorchDataLoader
@@ -20,6 +22,12 @@ class Trainer:
     ) -> None:
         self.logger = logger.bind(class_name=self.__class__.__name__)
         self.config = config or TrainConfig()
+        self.train_result: TrainResult = TrainResult(
+            train_losses=[], val_losses=[]
+        )
+        if self.config.seed is not None:
+            # only covers training-time randomness such as dropout
+            set_seed(self.config.seed)
         self.device = self._resolve_device(self.config.device)
         self.model = model.to(self.device)
         self.loss_fn = nn.MSELoss()
@@ -32,50 +40,65 @@ class Trainer:
     def train_step(self, dataloader: TorchDataLoader) -> float:
         """One epoch of training. Returns the mean reconstruction loss."""
         self.model.train()
-        total = 0.0
+        total, n_windows = 0.0, 0
         for windows, _, _ in dataloader:
-            batch = windows.to(self.device)
-            loss = self.loss_fn(self.model(batch), batch)
-            self.optimizer.zero_grad()
+            # compute prediction and loss
+            batch: Tensor = windows.to(self.device, non_blocking=True)
+            loss: Tensor = self.loss_fn(self.model(batch), batch)
+
+            # Backpropagation
             loss.backward()
-            if self.config.grad_clip:
-                nn.utils.clip_grad_norm_(
-                    self.model.parameters(), self.config.grad_clip
-                )
             self.optimizer.step()
-            total += loss.item()
-        return total / len(dataloader)
+            self.optimizer.zero_grad()
+
+            # weight by batch size: a partial last batch must count for less
+            total += loss.item() * batch.shape[0]
+            n_windows += batch.shape[0]
+        return total / n_windows
 
     @torch.inference_mode()
     def val_step(self, dataloader: TorchDataLoader) -> float:
         """One pass over held-out healthy windows. Returns the mean loss."""
         self.model.eval()
-        total = 0.0
+        total, n_windows = 0.0, 0
         for windows, _, _ in dataloader:
-            batch = windows.to(self.device)
-            total += self.loss_fn(self.model(batch), batch).item()
-        return total / len(dataloader)
+            batch: Tensor = windows.to(self.device, non_blocking=True)
+            loss: Tensor = self.loss_fn(self.model(batch), batch)
+            # weight by batch size: eval loaders keep their partial batch
+            total += loss.item() * batch.shape[0]
+            n_windows += batch.shape[0]
+        return total / n_windows
 
     def train(
         self,
         train_dataloader: TorchDataLoader,
         val_dataloader: TorchDataLoader,
-    ) -> dict[str, list[float]]:
+    ) -> TrainResult:
         """Fit the model, keeping the weights with the lowest validation loss."""
-        history: dict[str, list[float]] = {'train_loss': [], 'val_loss': []}
         best_loss, best_state, waited = float('inf'), None, 0
-
+        self.logger.info(
+            'Start training for {epochs} epochs using loss function: {loss}, and optimizer: {optimizer}',
+            epochs=self.config.epochs,
+            loss=self.loss_fn.__class__.__name__,
+            optimizer=self.optimizer.__class__.__name__,
+        )
         for epoch in tqdm(range(1, self.config.epochs + 1), desc='training'):
             train_loss = self.train_step(train_dataloader)
             val_loss = self.val_step(val_dataloader)
-            history['train_loss'].append(train_loss)
-            history['val_loss'].append(val_loss)
+            self.train_result.train_losses.append(train_loss)
+            self.train_result.val_losses.append(val_loss)
             self.logger.info(
                 'Epoch {epoch}: train_loss={train:.6f} val_loss={val:.6f}',
                 epoch=epoch,
                 train=train_loss,
                 val=val_loss,
             )
+            if not (math.isfinite(train_loss) and math.isfinite(val_loss)):
+                # a non-finite loss never beats best_loss
+                raise RuntimeError(
+                    f'Training diverged at epoch {epoch}: '
+                    f'train_loss={train_loss}, val_loss={val_loss}'
+                )
 
             if val_loss < best_loss:
                 best_loss, waited = val_loss, 0
@@ -91,7 +114,7 @@ class Trainer:
         if best_state is not None:
             self.model.load_state_dict(best_state)
         self.logger.info('Best validation loss: {loss:.6f}', loss=best_loss)
-        return history
+        return self.train_result
 
     @staticmethod
     def _resolve_device(device: str) -> torch.device:

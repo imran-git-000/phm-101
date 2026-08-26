@@ -58,8 +58,8 @@ class TrainConfig:
     learning_rate: float = 1e-3
     weight_decay: float = 0.0
     patience: int = 10  # early stopping; 0 disables it
-    grad_clip: float = 0.0  # max grad norm; 0 disables it
     device: str = 'auto'
+    seed: int | None = 0  # training-time randomness; None disables seeding
 
 
 @dataclass
@@ -70,3 +70,11 @@ class EvalResult:
     labels: np.ndarray  # (n_snapshots,) 0 healthy, 1 faulty
     threshold: float
     metrics: dict[str, float]
+
+
+@dataclass
+class TrainResult:
+    """Training and validation loss curves."""
+
+    train_losses: list[float]
+    val_losses: list[float]

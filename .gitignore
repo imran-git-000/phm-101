@@ -132,3 +132,6 @@ build/*
 
 # Extracted feature tables and caches (rebuildable from DATA_ROOT)
 data/
+
+# saved model checkpoints
+model_weights/
