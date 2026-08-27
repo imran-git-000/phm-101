@@ -134,4 +134,4 @@ build/*
 data/
 
 # saved model checkpoints
-model_weights/
+checkpoints/
