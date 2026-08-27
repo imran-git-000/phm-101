@@ -1,0 +1,16 @@
+model:
+  window_size: 2048
+  in_channels: 1
+  channels: [16, 32, 64, 128]
+  kernel_size: 7 # must be odd, so padding = kernel_size // 2 halves exactly
+  latent_dim: 32
+  dropout: 0.0
+  batch_norm: true
+
+training:
+  epochs: 30
+  learning_rate: 0.001
+  weight_decay: 0.0
+  patience: 5 # early stopping; 0 disables it
+  device: auto # auto | cpu | cuda
+  seed: 0 # null disables seeding

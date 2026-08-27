@@ -1,7 +1,10 @@
+from typing import TYPE_CHECKING
+
 import torch
 from torch import nn
 
-from phm_101.data_types.models import AutoencoderConfig
+if TYPE_CHECKING:
+    from phm_101.config.configs import AutoencoderConfig
 
 
 class ConvAutoencoder1d(nn.Module):
@@ -10,9 +13,9 @@ class ConvAutoencoder1d(nn.Module):
     Input and output are (batch, in_channels, window_size).
     """
 
-    def __init__(self, config: AutoencoderConfig | None = None) -> None:
+    def __init__(self, config: AutoencoderConfig) -> None:
         super().__init__()
-        self.config = config or AutoencoderConfig()
+        self.config = config
         if self.config.window_size % 2**self.config.n_blocks:
             raise ValueError('window_size must be divisible by 2 ** n_blocks')
         if self.config.kernel_size % 2 == 0:

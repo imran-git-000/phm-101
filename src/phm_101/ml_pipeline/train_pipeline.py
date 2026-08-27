@@ -7,21 +7,21 @@ from loguru import logger
 from torch import Tensor, nn
 from tqdm.auto import tqdm
 
-from phm_101.data_types.models import TrainConfig, TrainResult
+from phm_101.data_types.models import TrainResult
 from phm_101.utils.utils import set_seed
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader as TorchDataLoader
 
+    from phm_101.config.configs import TrainConfig
+
 
 class Trainer:
     """Train a reconstruction model on healthy windows."""
 
-    def __init__(
-        self, model: nn.Module, config: TrainConfig | None = None
-    ) -> None:
+    def __init__(self, model: nn.Module, config: TrainConfig) -> None:
         self.logger = logger.bind(class_name=self.__class__.__name__)
-        self.config = config or TrainConfig()
+        self.config = config
         self.train_result: TrainResult = TrainResult(
             train_losses=[], val_losses=[]
         )
