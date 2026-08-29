@@ -47,3 +47,11 @@ class ModelName(Enum):
     CONV1D_AUTOENCODER = 'conv1d_autoencoder'
     LSTM = 'lstm'
     TRANSFORMER_ENCODER = 'transformer_encoder'
+    TRANSFORMER_ENCODER_DECODER = 'transformer_encoder_decoder'
+
+
+class Paradigm(Enum):
+    """The paradigm of the model to use."""
+
+    FORECASTING = 'forecasting'
+    RECONSTRUCTION = 'reconstruction'
