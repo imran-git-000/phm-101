@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from phm_101.config.configs import EvalConfig
     from phm_101.detectors.base import Detector
 
+
 class Evaluator:
     """Pool a detector's window scores and measure detection quality."""
 
@@ -32,10 +33,14 @@ class Evaluator:
 
     def evaluate(self) -> EvalResult:
         """Calibrate the threshold on healthy val data, then score the test set."""
-        val_scores, _ = self.score(detector=self.detector, dataloader=self.val_dataloader)
+        val_scores, _ = self.score(
+            detector=self.detector, dataloader=self.val_dataloader
+        )
         threshold = float(np.quantile(val_scores, self.quantile))
 
-        scores, labels = self.score(detector=self.detector, dataloader=self.test_dataloader)
+        scores, labels = self.score(
+            detector=self.detector, dataloader=self.test_dataloader
+        )
         predictions = (scores > threshold).astype('int8')
         metrics = self.metrics(labels, predictions, scores)
 
