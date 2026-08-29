@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from phm_101.data_types.enums import Aggregation, ImsChannels, ModelName
+from phm_101.data_types.enums import Aggregation, ImsChannel, ModelName
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -46,19 +46,21 @@ class TrainConfig:
     weight_decay: float
     patience: int  # early stopping; 0 disables it
     device: str
-    seed: int | None  # training-time randomness; None disables seeding
+    seed: int
 
 
 @dataclass
 class DataConfig:
     """Data loading and preprocessing configuration."""
 
-    channel: ImsChannels
+    channel: ImsChannel
     window_size: int
     hop: int  # stride between windows; hop == window_size means no overlap
+    val_fraction: float  # fraction of healthy head to use for validation
     in_channels: int
     batch_size: int
     num_workers: int
+    seed: int
 
 
 @dataclass
@@ -73,10 +75,10 @@ class EvalConfig:
 class Config:
     """The whole config file: one field per top-level YAML section."""
 
-    model: ModelConfig
-    training: TrainConfig
-    data: DataConfig
-    evaluation: EvalConfig
+    model_config: ModelConfig
+    training_config: TrainConfig
+    data_config: DataConfig
+    evaluation_config: EvalConfig
 
 
 class ConfigLoader:
@@ -98,8 +100,10 @@ class ConfigLoader:
         """Read the YAML file into the config dataclasses."""
         raw_dict = yaml.safe_load(path.read_text(encoding='utf-8'))
         return Config(
-            model=ConfigLoader.build_model_config(raw_dict=raw_dict['model']),
-            training=TrainConfig(**raw_dict['training']),
-            data=DataConfig(**raw_dict['data']),
-            evaluation=EvalConfig(**raw_dict['evaluation']),
+            model_config=ConfigLoader.build_model_config(
+                raw_dict=raw_dict['model']
+            ),
+            training_config=TrainConfig(**raw_dict['training']),
+            data_config=DataConfig(**raw_dict['data']),
+            evaluation_config=EvalConfig(**raw_dict['evaluation']),
         )

@@ -13,18 +13,14 @@ from tqdm import tqdm
 from phm_101.utils.ims import CHANNELS, N_SAMPLES
 
 if TYPE_CHECKING:
-    from phm_101.data_types.enums import ImsTests
+    from phm_101.data_types.enums import ImsTest
 
 
-class DataExtractor:
+class RawToParquetConverter:
     def __init__(self) -> None:
         self.logger = logger.bind(class_name=self.__class__.__name__)
-        load_dotenv()
-        data_root = os.environ.get('DATA_ROOT')
-        if not data_root:
-            raise ValueError('DATA_ROOT env var is not set (see .env.example)')
-        self.raw_dir = Path(data_root) / 'time_series' / 'bearing' / 'ims'
-        self.cache_dir = Path('data') / 'ims' / 'raw_signals'
+        self.raw_dir = Path(os.environ.get('IMS_DATA_ROOT'))
+        self.cache_dir = Path(os.environ.get('RAW_SIGNALS_DIR'))
 
         self.schema = pa.schema(
             [
@@ -45,7 +41,7 @@ class DataExtractor:
             # instantiate one ParquetWriter and a buffer for each channel
             writers: dict[str, pq.ParquetWriter] = {
                 channel: pq.ParquetWriter(
-                    self.cache_dir / f'ims_bearing_{channel}.parquet',
+                    self.cache_dir / f'ims_bearing_{channel.value}.parquet',
                     self.schema,
                     compression='zstd',
                 )
@@ -93,7 +89,7 @@ class DataExtractor:
             dir=self.cache_dir,
         )
 
-    def _snapshots(self, test_dir_name: ImsTests) -> list[Path]:
+    def _snapshots(self, test_dir_name: ImsTest) -> list[Path]:
         """All snapshot files of a test, sorted chronologically."""
         snapshot_paths = [
             snapshot_path
@@ -109,7 +105,8 @@ class DataExtractor:
 
 def main() -> None:
     logger.info('Starting IMS raw signals to parquet conversion')
-    DataExtractor().save()
+    load_dotenv()
+    RawToParquetConverter().save()
 
 
 if __name__ == '__main__':

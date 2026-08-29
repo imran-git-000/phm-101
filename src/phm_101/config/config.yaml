@@ -5,9 +5,11 @@ data:
   channel: t2b1
   window_size: 2048
   hop: 2048
+  val_fraction: 0.2
   in_channels: 1
   batch_size: 256
   num_workers: 0       # > 0 materialises the window view once per worker
+  seed: 42
 
 training:
   epochs: 30
@@ -15,7 +17,7 @@ training:
   weight_decay: 0.0
   patience: 5 # early stopping; 0 disables it
   device: cuda # auto | cpu | cuda
-  seed: 0 # null disables seeding
+  seed: 42 # null disables seeding
 
 evaluation:
   aggregation: mean # mean | max over a snapshot's windows

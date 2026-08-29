@@ -1,24 +1,34 @@
-from phm_101.data_types.enums import ImsTests
+from phm_101.data_types.enums import ImsChannel, ImsTest
 
-CHANNELS: dict[ImsTests, list[str]] = {
-    ImsTests.T1: [
-        't1b1_x',
-        't1b1_y',
-        't1b2_x',
-        't1b2_y',
-        't1b3_x',
-        't1b3_y',
-        't1b4_x',
-        't1b4_y',
+CHANNELS: dict[ImsTest, list[ImsChannel]] = {
+    ImsTest.T1: [
+        ImsChannel.T1B1x,
+        ImsChannel.T1B1y,
+        ImsChannel.T1B2x,
+        ImsChannel.T1B2y,
+        ImsChannel.T1B3x,
+        ImsChannel.T1B3y,
+        ImsChannel.T1B4x,
+        ImsChannel.T1B4y,
     ],
-    ImsTests.T2: ['t2b1', 't2b2', 't2b3', 't2b4'],
-    ImsTests.T3: ['t3b1', 't3b2', 't3b3', 't3b4'],
+    ImsTest.T2: [
+        ImsChannel.T2B1,
+        ImsChannel.T2B2,
+        ImsChannel.T2B3,
+        ImsChannel.T2B4,
+    ],
+    ImsTest.T3: [
+        ImsChannel.T3B1,
+        ImsChannel.T3B2,
+        ImsChannel.T2B3,
+        ImsChannel.T2B4,
+    ],
 }
 
 N_SAMPLES = 20480
 
 
-def test_of(channel: str) -> ImsTests:
+def test_of(channel: ImsChannel) -> ImsTest:
     """The test a channel belongs to."""
     for test, channels in CHANNELS.items():
         if channel in channels:

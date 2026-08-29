@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ImsTests(Enum):
+class ImsTest(Enum):
     """IMS bearing tests.
 
     One parquet file per accelerometer, named ims_bearing_t1b3_x.
@@ -12,7 +12,7 @@ class ImsTests(Enum):
     T3 = '3rd_test'
 
 
-class ImsChannels(Enum):
+class ImsChannel(Enum):
     """Accelerometer channels in the IMS bearing tests."""
 
     T1B1x = 't1b1x'

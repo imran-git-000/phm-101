@@ -1,25 +1,29 @@
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 import numpy as np
 from loguru import logger
 
-from phm_101.data_types.enums import ImsTests
+from phm_101.data_types.enums import ImsTest
 from phm_101.data_types.models import ChannelData, ChannelSplit
 from phm_101.utils.ims import test_of
+
+if TYPE_CHECKING:
+    from phm_101.config.configs import DataConfig
 
 
 class DataTransformer:
     """Split a channel chronologically and z-score with train statistics."""
 
-    def __init__(self) -> None:
+    def __init__(self, data_config: DataConfig) -> None:
         self.logger = logger.bind(class_name=self.__class__.__name__)
-        self.val_fraction = 0.2
+        self.val_fraction = data_config.val_fraction
 
         # last timestamp considered safely healthy
-        self.train_end: dict[ImsTests, str] = {
-            ImsTests.T1: '2003-11-18 19:46:07',
-            ImsTests.T2: '2004-02-16 07:32:39',
-            ImsTests.T3: '2004-04-15 23:42:55',
+        self.train_end: dict[ImsTest, str] = {
+            ImsTest.T1: '2003-11-18 19:46:07',
+            ImsTest.T2: '2004-02-16 07:32:39',
+            ImsTest.T3: '2004-04-15 23:42:55',
         }
 
         self.mean: float | None = None
