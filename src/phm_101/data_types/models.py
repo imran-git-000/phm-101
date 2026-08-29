@@ -34,13 +34,25 @@ class ChannelSplit:
 
 
 @dataclass
+class Metrics:
+    """Detection quality at one threshold. tpr is recall under another name."""
+
+    accuracy: float
+    precision: float
+    recall: float
+    fpr: float
+    tpr: float
+    auroc: float  # nan when the channel never fails
+
+
+@dataclass
 class EvalResult:
     """Snapshot-level scores and the metrics derived from them."""
 
     scores: np.ndarray  # (n_snapshots,) anomaly score
     labels: np.ndarray  # (n_snapshots,) 0 healthy, 1 faulty
     threshold: float
-    metrics: dict[str, float]
+    metrics: Metrics
 
 
 @dataclass

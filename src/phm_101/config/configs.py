@@ -23,6 +23,10 @@ class ModelConfig:
     name: ModelName
     paradigm: Paradigm
 
+    def __post_init__(self) -> None:
+        self.name = ModelName(self.name)
+        self.paradigm = Paradigm(self.paradigm)
+
 
 @dataclass(kw_only=True)
 class Conv1DAutoencoderConfig(ModelConfig):
@@ -136,6 +140,9 @@ class EvalConfig:
 
     aggregation: Aggregation
     quantile: float  # threshold percentile on healthy validation scores
+
+    def __post_init__(self) -> None:
+        self.aggregation = Aggregation(self.aggregation)
 
 
 @dataclass
