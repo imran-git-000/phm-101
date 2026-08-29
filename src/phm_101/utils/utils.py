@@ -8,6 +8,7 @@ import torch
 from loguru import logger
 
 from phm_101.config.configs import ConfigLoader
+from phm_101.data_types.enums import ImsChannel
 from phm_101.data_types.models import Checkpoint
 
 if TYPE_CHECKING:
@@ -58,7 +59,7 @@ def load_checkpoint(path: Path) -> Checkpoint:
         config=ConfigLoader.build_model_config(raw['config']),
         mean=float(raw['mean']),
         std=float(raw['std']),
-        channel=str(raw['channel']),
+        channel=ImsChannel(raw['channel']),
     )
 
 
