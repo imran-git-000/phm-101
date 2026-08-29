@@ -20,8 +20,8 @@ CHANNELS: dict[ImsTest, list[ImsChannel]] = {
     ImsTest.T3: [
         ImsChannel.T3B1,
         ImsChannel.T3B2,
-        ImsChannel.T2B3,
-        ImsChannel.T2B4,
+        ImsChannel.T3B3,
+        ImsChannel.T3B4,
     ],
 }
 

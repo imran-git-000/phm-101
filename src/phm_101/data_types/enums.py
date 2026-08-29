@@ -15,14 +15,14 @@ class ImsTest(Enum):
 class ImsChannel(Enum):
     """Accelerometer channels in the IMS bearing tests."""
 
-    T1B1x = 't1b1x'
-    T1B1y = 't1b1y'
-    T1B2x = 't1b2x'
-    T1B2y = 't1b2y'
-    T1B3x = 't1b3x'
-    T1B3y = 't1b3y'
-    T1B4x = 't1b4x'
-    T1B4y = 't1b4y'
+    T1B1x = 't1b1_x'
+    T1B1y = 't1b1_y'
+    T1B2x = 't1b2_x'
+    T1B2y = 't1b2_y'
+    T1B3x = 't1b3_x'
+    T1B3y = 't1b3_y'
+    T1B4x = 't1b4_x'
+    T1B4y = 't1b4_y'
     T2B1 = 't2b1'
     T2B2 = 't2b2'
     T2B3 = 't2b3'

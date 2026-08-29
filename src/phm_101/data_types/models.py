@@ -2,12 +2,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import numpy as np
     from torch import Tensor
 
-    from phm_101.config.configs import ModelConfig
+    from phm_101.config.configs import DataConfig, ModelConfig
     from phm_101.data_types.enums import ImsChannel
 
 
@@ -65,17 +63,11 @@ class TrainResult:
 
 @dataclass
 class Checkpoint:
-    """A trained model plus everything needed to score with it again.
-
-    The z-score statistics belong here: scoring with statistics other than
-    the ones the model trained under silently shifts every reconstruction
-    error, so the weights alone are not enough to reproduce a run.
-    """
+    """A trained model plus everything needed to score with it again."""
 
     state_dict: dict[str, Tensor]
-    config: ModelConfig
-    mean: float
-    std: float
+    model_config: ModelConfig
+    data_config: DataConfig
     channel: ImsChannel
 
 
@@ -85,5 +77,4 @@ class RunResult:
 
     channel: ImsChannel
     eval_result: EvalResult
-    output_dir: Path
     train_result: TrainResult | None  # None when a checkpoint was loaded

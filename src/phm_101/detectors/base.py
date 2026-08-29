@@ -28,3 +28,17 @@ class Detector(ABC):
     def score_batch(self, windows: Tensor) -> np.ndarray:
         """Evaluate the detector on a batch of windows, returning one score per window."""
         raise NotImplementedError()
+
+    @abstractmethod
+    def state(self) -> dict[str, Tensor]:
+        """Everything the detector needs to score again after a reload.
+
+        Kept on the detector rather than reached for as `detector.model`, so a
+        detector without a torch module can still be checkpointed.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def load_state(self, state: dict[str, Tensor]) -> None:
+        """Restore what state() returned."""
+        raise NotImplementedError()

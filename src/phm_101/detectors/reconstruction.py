@@ -61,3 +61,9 @@ class ReconstructionDetector(Detector):
         reconstruction = self.model(batch)
         # mean over channels and time leaves one score per window
         return ((reconstruction - batch) ** 2).mean(dim=(1, 2)).cpu().numpy()
+
+    def state(self) -> dict[str, Tensor]:
+        return self.model.state_dict()
+
+    def load_state(self, state: dict[str, Tensor]) -> None:
+        self.model.load_state_dict(state)

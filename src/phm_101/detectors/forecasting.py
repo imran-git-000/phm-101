@@ -86,3 +86,9 @@ class ForecastingDetector(Detector):
         )
         errors = (self.model(inputs) - targets) ** 2
         return errors.mean(dim=(1, 2)).cpu().numpy()
+
+    def state(self) -> dict[str, Tensor]:
+        return self.model.state_dict()
+
+    def load_state(self, state: dict[str, Tensor]) -> None:
+        self.model.load_state_dict(state)
