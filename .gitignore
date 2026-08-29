@@ -135,3 +135,6 @@ data/
 
 # saved model checkpoints
 checkpoints/
+
+# saved artifacts images reports etc
+reports/
