@@ -66,10 +66,12 @@ class ForecastingDetector(Detector):
         trainer = Trainer(
             model=self.model,
             train_config=self.train_config,
-            prepare=self.split,
+            horizon=self.horizon,
         )
         result = trainer.train(
-            train_dataloader=train_loader, val_dataloader=val_loader
+            train_dataloader=train_loader,
+            val_dataloader=val_loader,
+            is_forecasting=True,
         )
         # the trainer restored the weights of the best epoch
         self.model = trainer.model

@@ -1,5 +1,6 @@
 model:
   name: conv1d_autoencoder
+  paradigm: reconstruction
 
 data:
   channel: t2b1

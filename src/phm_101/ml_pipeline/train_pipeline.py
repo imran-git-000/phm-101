@@ -8,7 +8,7 @@ from torch import Tensor, nn
 from tqdm.auto import tqdm
 
 from phm_101.data_types.models import TrainResult
-from phm_101.utils.utils import set_seed
+from phm_101.utils.utils import resolve_device, set_seed
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader as TorchDataLoader
@@ -17,18 +17,25 @@ if TYPE_CHECKING:
 
 
 class Trainer:
-    """Train a reconstruction model on healthy windows."""
+    """Train a model on healthy windows."""
 
-    def __init__(self, model: nn.Module, config: TrainConfig) -> None:
+    def __init__(
+        self,
+        model: nn.Module,
+        train_config: TrainConfig,
+        horizon: int = 1,
+    ) -> None:
         self.logger = logger.bind(class_name=self.__class__.__name__)
-        self.config = config
+        self.config = train_config
+        # only read when the caller trains a forecaster
+        self.horizon = horizon
         self.train_result: TrainResult = TrainResult(
             train_losses=[], val_losses=[]
         )
         if self.config.seed is not None:
             # only covers training-time randomness such as dropout
             set_seed(self.config.seed)
-        self.device = self._resolve_device(self.config.device)
+        self.device = resolve_device(self.config.device)
         self.model = model.to(self.device)
         self.loss_fn = nn.MSELoss()
         self.optimizer = torch.optim.AdamW(
@@ -37,8 +44,10 @@ class Trainer:
             weight_decay=self.config.weight_decay,
         )
 
-    def train_step(self, dataloader: TorchDataLoader) -> float:
-        """One epoch of training. Returns the mean reconstruction loss."""
+    def train_step(
+        self, dataloader: TorchDataLoader, is_forecasting: bool
+    ) -> float:
+        """One epoch of training. Returns the mean loss."""
         self.model.train()
         # the running sum stays on the device: reading it every batch would
         # sync the host and stall the next batch's loading
@@ -47,7 +56,12 @@ class Trainer:
         for windows, _, _ in dataloader:
             # compute prediction and loss
             batch: Tensor = windows.to(self.device, non_blocking=True)
-            loss: Tensor = self.loss_fn(self.model(batch), batch)
+            inputs, targets = (
+                self.split(batch, self.horizon)
+                if is_forecasting
+                else self.reconstruct(batch)
+            )
+            loss: Tensor = self.loss_fn(self.model(inputs), targets)
 
             # Backpropagation
             loss.backward()
@@ -60,14 +74,21 @@ class Trainer:
         return float(total) / n_windows
 
     @torch.inference_mode()
-    def val_step(self, dataloader: TorchDataLoader) -> float:
+    def val_step(
+        self, dataloader: TorchDataLoader, is_forecasting: bool
+    ) -> float:
         """One pass over held-out healthy windows. Returns the mean loss."""
         self.model.eval()
         total = torch.zeros((), device=self.device)
         n_windows = 0
         for windows, _, _ in dataloader:
             batch: Tensor = windows.to(self.device, non_blocking=True)
-            loss: Tensor = self.loss_fn(self.model(batch), batch)
+            inputs, targets = (
+                self.split(batch, self.horizon)
+                if is_forecasting
+                else self.reconstruct(batch)
+            )
+            loss: Tensor = self.loss_fn(self.model(inputs), targets)
             # weight by batch size: eval loaders keep their partial batch
             total += loss * batch.shape[0]
             n_windows += batch.shape[0]
@@ -77,6 +98,7 @@ class Trainer:
         self,
         train_dataloader: TorchDataLoader,
         val_dataloader: TorchDataLoader,
+        is_forecasting: bool,
     ) -> TrainResult:
         """Fit the model, keeping the weights with the lowest validation loss."""
         best_loss, best_state, waited = float('inf'), None, 0
@@ -87,8 +109,12 @@ class Trainer:
             optimizer=self.optimizer.__class__.__name__,
         )
         for epoch in tqdm(range(1, self.config.epochs + 1), desc='training'):
-            train_loss = self.train_step(train_dataloader)
-            val_loss = self.val_step(val_dataloader)
+            train_loss = self.train_step(
+                dataloader=train_dataloader, is_forecasting=is_forecasting
+            )
+            val_loss = self.val_step(
+                dataloader=val_dataloader, is_forecasting=is_forecasting
+            )
             self.train_result.train_losses.append(train_loss)
             self.train_result.val_losses.append(val_loss)
             self.logger.info(
@@ -121,7 +147,11 @@ class Trainer:
         return self.train_result
 
     @staticmethod
-    def _resolve_device(device: str) -> torch.device:
-        if device != 'auto':
-            return torch.device(device)
-        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    def reconstruct(windows: Tensor) -> tuple[Tensor, Tensor]:
+        """Pair a window with itself: the model rebuilds its own input."""
+        return windows, windows
+
+    @staticmethod
+    def split(windows: Tensor, horizon: int) -> tuple[Tensor, Tensor]:
+        """Shift a window into (input, target) for dense prediction."""
+        return windows[..., :-horizon], windows[..., horizon:]

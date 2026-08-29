@@ -45,7 +45,9 @@ class ReconstructionDetector(Detector):
         """Minimise reconstruction error on healthy windows."""
         trainer = Trainer(model=self.model, train_config=self.train_config)
         result = trainer.train(
-            train_dataloader=train_loader, val_dataloader=val_loader
+            train_dataloader=train_loader,
+            val_dataloader=val_loader,
+            is_forecasting=False,
         )
         # the trainer restored the weights of the best epoch
         self.model = trainer.model
