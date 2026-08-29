@@ -1,35 +1,72 @@
+import argparse
 import random
+from dataclasses import asdict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import torch
 from loguru import logger
 
+from phm_101.config.configs import ConfigLoader
+from phm_101.data_types.models import Checkpoint
 
-def save_model(model: torch.nn.Module, model_name: str) -> None:
-    """Saves a PyTorch model to a target directory.
+if TYPE_CHECKING:
+    from phm_101.config.configs import ModelConfig
 
-    Args:
-      model: A target PyTorch model to save.
-      target_dir: A directory for saving the model to.
-      model_name: A filename for the saved model. Should include
-        either ".pth" or ".pt" as the file extension.
 
-    Example usage:
-      save_model(model=model_0,
-                 target_dir="models",
-                 model_name="05_going_modular_tingvgg_model.pth")
+def save_checkpoint(
+    state: dict[str, torch.Tensor],
+    config: ModelConfig,
+    *,
+    mean: float,
+    std: float,
+    channel: str,
+    path: Path,
+) -> None:
+    """Write the weights and everything needed to score with them again.
+
+    Only plain types go to disk -- tensors, a dict, floats, a string -- so the
+    file loads back under weights_only=True and never unpickles arbitrary
+    objects.
     """
-    # Create target directory
-    target_dir_path = Path('model_weights')
-    target_dir_path.mkdir(parents=True, exist_ok=True)
+    if path.suffix not in {'.pt', '.pth'}:
+        raise ValueError(f'checkpoint must end in .pt or .pth, got {path}')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info('Saving checkpoint to: {path}', path=path)
+    torch.save(
+        obj={
+            'state_dict': state,
+            'config': asdict(config),
+            'mean': mean,
+            'std': std,
+            'channel': channel,
+        },
+        f=path,
+    )
 
-    # Create model save path
-    assert model_name.endswith(('.pth', '.pt'))
-    model_save_path = target_dir_path / model_name
 
-    # Save the model state_dict()
-    logger.info('Saving model to: {path}', path=model_save_path)
-    torch.save(obj=model.state_dict(), f=model_save_path)
+def load_checkpoint(path: Path) -> Checkpoint:
+    """Read back what save_checkpoint wrote.
+
+    The stored `name` decides which config class is rebuilt, so a checkpoint
+    describes its own model family.
+    """
+    logger.info('Loading checkpoint from: {path}', path=path)
+    raw = torch.load(path, map_location='cpu', weights_only=True)
+    return Checkpoint(
+        state_dict=raw['state_dict'],
+        config=ConfigLoader.build_model_config(raw['config']),
+        mean=float(raw['mean']),
+        std=float(raw['std']),
+        channel=str(raw['channel']),
+    )
+
+
+def resolve_device(device: str) -> torch.device:
+    """Turn the configured device string into a torch device."""
+    if device != 'auto':
+        return torch.device(device)
+    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def set_seed(seed: int) -> None:
@@ -42,3 +79,24 @@ def set_seed(seed: int) -> None:
     """
     random.seed(seed)
     torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog='phm_101',
+        description='Train and evaluate an unsupervised bearing fault detector.',
+    )
+    parser.add_argument(
+        '--channel',
+        default=None,
+        help="channel to run, or 'all' for every IMS channel "
+        '(default: the channel in the config file)',
+    )
+    parser.add_argument(
+        '--model-path',
+        type=Path,
+        default=None,
+        help='score with this checkpoint instead of training a new model',
+    )
+    return parser
