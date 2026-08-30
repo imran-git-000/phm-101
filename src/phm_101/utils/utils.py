@@ -1,13 +1,14 @@
 import argparse
 import random
 from dataclasses import asdict
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import torch
 from loguru import logger
 
-from phm_101.config.configs import ConfigLoader
+from phm_101.config.configs import ConfigLoader, DataConfig
 from phm_101.data_types.enums import ImsChannel
 from phm_101.data_types.models import Checkpoint
 
@@ -15,18 +16,30 @@ if TYPE_CHECKING:
     from phm_101.config.configs import ModelConfig
 
 
+def _plain(config: ModelConfig | DataConfig) -> dict[str, object]:
+    """A config as plain data.
+
+    asdict leaves ModelName, Paradigm and ImsChannel as enum objects, which
+    torch.load refuses to unpickle under weights_only=True. Their values are
+    strings, and every config coerces them back in __post_init__.
+    """
+    return {
+        key: value.value if isinstance(value, Enum) else value
+        for key, value in asdict(config).items()
+    }
+
+
 def save_checkpoint(
     state: dict[str, torch.Tensor],
-    config: ModelConfig,
+    model_config: ModelConfig,
+    data_config: DataConfig,
     *,
-    mean: float,
-    std: float,
-    channel: str,
+    channel: ImsChannel,
     path: Path,
 ) -> None:
     """Write the weights and everything needed to score with them again.
 
-    Only plain types go to disk -- tensors, a dict, floats, a string -- so the
+    Only plain types go to disk -- tensors, dicts, floats, strings -- so the
     file loads back under weights_only=True and never unpickles arbitrary
     objects.
     """
@@ -37,10 +50,9 @@ def save_checkpoint(
     torch.save(
         obj={
             'state_dict': state,
-            'config': asdict(config),
-            'mean': mean,
-            'std': std,
-            'channel': channel,
+            'model_config': _plain(model_config),
+            'data_config': _plain(data_config),
+            'channel': ImsChannel(channel).value,
         },
         f=path,
     )
@@ -56,9 +68,8 @@ def load_checkpoint(path: Path) -> Checkpoint:
     raw = torch.load(path, map_location='cpu', weights_only=True)
     return Checkpoint(
         state_dict=raw['state_dict'],
-        config=ConfigLoader.build_model_config(raw['config']),
-        mean=float(raw['mean']),
-        std=float(raw['std']),
+        model_config=ConfigLoader.build_model_config(raw['model_config']),
+        data_config=DataConfig(**raw['data_config']),
         channel=ImsChannel(raw['channel']),
     )
 
