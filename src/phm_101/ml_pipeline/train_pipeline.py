@@ -12,6 +12,7 @@ from phm_101.utils.utils import resolve_device, set_seed
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader as TorchDataLoader
+    from torch.utils.tensorboard import SummaryWriter
 
     from phm_101.config.configs import TrainConfig
 
@@ -24,9 +25,12 @@ class Trainer:
         model: nn.Module,
         train_config: TrainConfig,
         horizon: int = 1,
+        writer: SummaryWriter | None = None,
     ) -> None:
         self.logger = logger.bind(class_name=self.__class__.__name__)
         self.config = train_config
+        # None when nobody is watching; the loop is otherwise unchanged
+        self.writer = writer
         # only read when the caller trains a forecaster
         self.horizon = horizon
         self.train_result: TrainResult = TrainResult(
@@ -123,6 +127,11 @@ class Trainer:
                 train=train_loss,
                 val=val_loss,
             )
+            if self.writer is not None:
+                self.writer.add_scalars(
+                    'loss', {'train': train_loss, 'val': val_loss}, epoch
+                )
+                self.writer.flush()
             if not (math.isfinite(train_loss) and math.isfinite(val_loss)):
                 # a non-finite loss never beats best_loss
                 raise RuntimeError(

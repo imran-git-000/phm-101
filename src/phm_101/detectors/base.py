@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     import numpy as np
     from torch import Tensor
     from torch.utils.data import DataLoader as TorchDataLoader
+    from torch.utils.tensorboard import SummaryWriter
 
     from phm_101.data_types.models import TrainResult
 
@@ -19,7 +20,10 @@ class Detector(ABC):
 
     @abstractmethod
     def fit(
-        self, train_loader: TorchDataLoader, val_loader: TorchDataLoader
+        self,
+        train_loader: TorchDataLoader,
+        val_loader: TorchDataLoader,
+        writer: SummaryWriter | None = None,
     ) -> TrainResult:
         """Fit the detector to healthy training data, optionally using a validation set for early stopping."""
         raise NotImplementedError()

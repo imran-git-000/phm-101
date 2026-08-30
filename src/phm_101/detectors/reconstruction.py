@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     import numpy as np
     from torch import Tensor
     from torch.utils.data import DataLoader as TorchDataLoader
+    from torch.utils.tensorboard import SummaryWriter
 
     from phm_101.config.configs import DataConfig, ModelConfig, TrainConfig
     from phm_101.data_types.models import TrainResult
@@ -40,10 +41,17 @@ class ReconstructionDetector(Detector):
         ).to(self.device)
 
     def fit(
-        self, train_loader: TorchDataLoader, val_loader: TorchDataLoader
+        self,
+        train_loader: TorchDataLoader,
+        val_loader: TorchDataLoader,
+        writer: SummaryWriter | None = None,
     ) -> TrainResult:
         """Minimise reconstruction error on healthy windows."""
-        trainer = Trainer(model=self.model, train_config=self.train_config)
+        trainer = Trainer(
+            model=self.model,
+            train_config=self.train_config,
+            writer=writer,
+        )
         result = trainer.train(
             train_dataloader=train_loader,
             val_dataloader=val_loader,

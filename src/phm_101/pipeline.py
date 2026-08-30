@@ -1,8 +1,10 @@
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from torch.utils.tensorboard import SummaryWriter
+from torchvision.io import read_image
 
 from phm_101.data_pipeline.data_extractor import DataExtractor
 from phm_101.data_pipeline.data_loader import DataLoader
@@ -127,6 +129,11 @@ class Pipeline:
         )
         self.logger.info('Terminated Data Pipeline')
 
+        output_dir = self._output_dir(
+            channel=channel, checkpoint_path=checkpoint_path
+        )
+        writer = SummaryWriter(log_dir=str(output_dir))
+
         if model_config.paradigm is Paradigm.FORECASTING:
             detector = ForecastingDetector(
                 model_config=model_config,
@@ -144,7 +151,9 @@ class Pipeline:
         if checkpoint is None:
             self.logger.info('Starting training pipeline')
             train_result = detector.fit(
-                train_loader=train_loader, val_loader=val_loader
+                train_loader=train_loader,
+                val_loader=val_loader,
+                writer=writer,
             )
             save_checkpoint(
                 state=detector.state(),
@@ -167,9 +176,6 @@ class Pipeline:
             test_dataloader=test_loader,
         ).evaluate()
 
-        output_dir = self._output_dir(
-            channel=channel, checkpoint_path=checkpoint_path
-        )
         self._write_artifacts(
             channel=channel,
             eval_result=eval_result,
@@ -177,6 +183,10 @@ class Pipeline:
             timestamps=data_splitted.test.timestamps,
             output_dir=output_dir,
         )
+        self._log_run(
+            writer=writer, eval_result=eval_result, output_dir=output_dir
+        )
+        writer.close()
         self.logger.info(
             'Terminated evaluation pipeline. Saving artifacts in {output}',
             output=output_dir,
@@ -270,3 +280,14 @@ class Pipeline:
             / source
             / 'summary.csv'
         )
+
+    @staticmethod
+    def _log_run(
+        writer: SummaryWriter, eval_result: EvalResult, output_dir: Path
+    ) -> None:
+        """Put the plots and the final metrics beside the loss curves."""
+        for path in sorted(output_dir.glob('*.png')):
+            writer.add_image(tag=path.stem, img_tensor=read_image(str(path)))
+        for name, value in asdict(eval_result.metrics).items():
+            writer.add_scalar(tag=f'metrics/{name}', scalar_value=value)
+        writer.flush()

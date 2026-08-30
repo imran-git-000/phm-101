@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     import numpy as np
     from torch import Tensor
     from torch.utils.data import DataLoader as TorchDataLoader
+    from torch.utils.tensorboard import SummaryWriter
 
     from phm_101.config.configs import (
         DataConfig,
@@ -60,13 +61,17 @@ class ForecastingDetector(Detector):
         return windows[..., : -self.horizon], windows[..., self.horizon :]
 
     def fit(
-        self, train_loader: TorchDataLoader, val_loader: TorchDataLoader
+        self,
+        train_loader: TorchDataLoader,
+        val_loader: TorchDataLoader,
+        writer: SummaryWriter | None = None,
     ) -> TrainResult:
         """Minimise prediction error on healthy windows."""
         trainer = Trainer(
             model=self.model,
             train_config=self.train_config,
             horizon=self.horizon,
+            writer=writer,
         )
         result = trainer.train(
             train_dataloader=train_loader,

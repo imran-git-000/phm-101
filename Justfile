@@ -12,6 +12,10 @@ default:
 to-parquet:
     uv run scripts/save_raw_parquet.py
 
+# Serve TensorBoard over the artifacts directory (one run per channel).
+board dir="reports":
+    uv run tensorboard --logdir {{dir}}
+
 # == SETUP REPOSITORY AND DEPENDENCIES
 
 # Install the repository git hooks into .git/hooks.

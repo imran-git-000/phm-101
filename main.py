@@ -23,10 +23,10 @@ def main() -> None:
     args = build_parser().parse_args()
     load_dotenv()
 
-    config_path = Path(os.environ.get('CONFIG_PATH'))
-    raw_signals_dir = Path(os.environ.get('RAW_SIGNALS_DIR'))
-    artifacts_dir = Path(os.environ.get('ARTIFACTS_DIR'))
-    checkpoints_dir = Path(os.environ.get('CHECKPOINTS_DIR'))
+    config_path = Path(os.environ['CONFIG_PATH'])
+    raw_signals_dir = Path(os.environ['RAW_SIGNALS_DIR'])
+    artifacts_dir = Path(os.environ['ARTIFACTS_DIR'])
+    checkpoints_dir = Path(os.environ['CHECKPOINTS_DIR'])
 
     config = ConfigLoader.load_config(path=config_path)
     pipeline = Pipeline(
