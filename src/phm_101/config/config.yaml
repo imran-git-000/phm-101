@@ -5,7 +5,7 @@ model:
 data:
   channel: t2b1
   window_size: 2048
-  hop: 2048
+  hop: 1024
   val_fraction: 0.2
   in_channels: 1
   batch_size: 256
@@ -13,15 +13,15 @@ data:
   seed: 42
 
 training:
-  epochs: 30
+  epochs: 300
   learning_rate: 0.001
   weight_decay: 0.0
-  patience: 5 # early stopping; 0 disables it
+  patience: 10 # early stopping; 0 disables it
   device: cuda # auto | cpu | cuda
   seed: 42 # null disables seeding
   checkpoint_name: ims_t2b1_conv1dae.pt
 
 evaluation:
   aggregation: mean # mean | max over a snapshot's windows
-  quantile: 0.99 # threshold percentile on healthy validation scores
+  quantile: 0.95 # threshold percentile on healthy validation scores
   output_artifacts: ims_t2b1_conv1dae

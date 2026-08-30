@@ -16,6 +16,9 @@ to-parquet:
 board dir="reports":
     uv run tensorboard --logdir {{dir}}
 
+train:
+    uv run main.py
+
 # == SETUP REPOSITORY AND DEPENDENCIES
 
 # Install the repository git hooks into .git/hooks.

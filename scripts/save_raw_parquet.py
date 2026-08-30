@@ -13,14 +13,14 @@ from tqdm import tqdm
 from phm_101.utils.ims import CHANNELS, N_SAMPLES
 
 if TYPE_CHECKING:
-    from phm_101.data_types.enums import ImsTest
+    from phm_101.data_types.enums import ImsChannel, ImsTest
 
 
 class RawToParquetConverter:
     def __init__(self) -> None:
         self.logger = logger.bind(class_name=self.__class__.__name__)
-        self.raw_dir = Path(os.environ.get('IMS_DATA_ROOT'))
-        self.cache_dir = Path(os.environ.get('RAW_SIGNALS_DIR'))
+        self.raw_dir = Path(os.environ['IMS_DATA_ROOT'])
+        self.cache_dir = Path(os.environ['RAW_SIGNALS_DIR'])
 
         self.schema = pa.schema(
             [
@@ -39,7 +39,7 @@ class RawToParquetConverter:
         # iterate over test directories
         for test_dir_name, channels in CHANNELS.items():
             # instantiate one ParquetWriter and a buffer for each channel
-            writers: dict[str, pq.ParquetWriter] = {
+            writers: dict[ImsChannel, pq.ParquetWriter] = {
                 channel: pq.ParquetWriter(
                     self.cache_dir / f'ims_bearing_{channel.value}.parquet',
                     self.schema,

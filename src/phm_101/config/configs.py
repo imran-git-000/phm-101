@@ -35,11 +35,11 @@ class Conv1DAutoencoderConfig(ModelConfig):
     name: ModelName = ModelName.CONV1D_AUTOENCODER
     paradigm: Paradigm = Paradigm.RECONSTRUCTION
     # one downsampling block per entry; length sets the depth
-    channels: tuple[int, ...] = (16, 32, 64, 128)
+    channels: tuple[int, ...] = (16, 32, 64, 128, 128)
     kernel_size: int = (
-        7  # must be odd, so padding = kernel_size // 2 halves exactly
+        15  # must be odd, so padding = kernel_size // 2 halves exactly
     )
-    latent_dim: int = 32
+    latent_dim: int = 16
     dropout: float = 0.0
     batch_norm: bool = True
 
