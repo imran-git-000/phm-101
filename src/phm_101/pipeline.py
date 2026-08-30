@@ -1,4 +1,5 @@
 from dataclasses import replace
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -16,8 +17,6 @@ from phm_101.utils.ims import CHANNELS
 from phm_101.utils.utils import load_checkpoint, save_checkpoint, set_seed
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import numpy as np
 
     from phm_101.config.configs import Config
@@ -61,7 +60,7 @@ class Pipeline:
         - scenario 2: checkpoint -> it owns the architecture and the window
                      geometry; the channel stays the caller's
         """
-        channel = channel or self.config.data_config.channel
+        channel = ImsChannel(channel or self.config.data_config.channel)
         model_config = self.config.model_config
         data_config = replace(self.config.data_config, channel=channel)
         self.logger.info(
@@ -147,16 +146,12 @@ class Pipeline:
             train_result = detector.fit(
                 train_loader=train_loader, val_loader=val_loader
             )
-            checkpointpath = (
-                self.checkpoints_dir
-                / self.config.training_config.checkpoint_name
-            )
             save_checkpoint(
                 state=detector.state(),
                 model_config=model_config,
                 data_config=data_config,
                 channel=channel,
-                path=checkpointpath,
+                path=self._checkpoint_path(channel=channel),
             )
             self.logger.info(
                 'Terminated training pipeline, saving checkpoint.'
@@ -172,9 +167,7 @@ class Pipeline:
             test_dataloader=test_loader,
         ).evaluate()
 
-        output_dir = (
-            self.artifacts_dir / self.config.evaluation_config.output_artifacts
-        )
+        output_dir = self._output_dir(channel=channel)
         self._write_artifacts(
             channel=channel,
             eval_result=eval_result,
@@ -247,4 +240,17 @@ class Pipeline:
         )
         reporting.plot_score_histogram(
             eval_result, output_dir / 'score_histogram.png'
+        )
+
+    def _checkpoint_path(self, channel: ImsChannel) -> Path:
+        """One file per channel: train_all writes sixteen, not one."""
+        stem = Path(self.config.training_config.checkpoint_name).stem
+        return self.checkpoints_dir / f'{stem}_{channel.value}.pt'
+
+    def _output_dir(self, channel: ImsChannel) -> Path:
+        """Keep a transfer run's artifacts apart from the channel's own run."""
+        return (
+            self.artifacts_dir
+            / self.config.evaluation_config.output_artifacts
+            / channel.value
         )
