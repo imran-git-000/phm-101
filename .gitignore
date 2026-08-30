@@ -138,3 +138,6 @@ checkpoints/
 
 # saved artifacts images reports etc
 reports/
+
+# tensorboard runs
+runs/
