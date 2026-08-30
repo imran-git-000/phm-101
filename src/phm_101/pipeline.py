@@ -66,7 +66,7 @@ class Pipeline:
         data_config = replace(self.config.data_config, channel=channel)
         self.logger.info(
             'Running Fault Detection pipeline on {channel}{how}',
-            channel=self.config.data_config.channel.value,
+            channel=channel.value,
             how='' if checkpoint_path is None else f' from {checkpoint_path}',
         )
         checkpoint: Checkpoint | None = None
@@ -77,7 +77,7 @@ class Pipeline:
             checkpoint = load_checkpoint(path=checkpoint_path)
             model_config = checkpoint.model_config
             data_config = replace(
-                self.config.data_config,
+                data_config,
                 window_size=checkpoint.data_config.window_size,
                 in_channels=checkpoint.data_config.in_channels,
             )
@@ -128,7 +128,7 @@ class Pipeline:
         )
         self.logger.info('Terminated Data Pipeline')
 
-        if self.config.model_config.paradigm is Paradigm.FORECASTING:
+        if model_config.paradigm is Paradigm.FORECASTING:
             detector = ForecastingDetector(
                 model_config=model_config,
                 data_config=data_config,

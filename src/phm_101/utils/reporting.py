@@ -51,7 +51,9 @@ def write_metrics(
 def write_summary(results: list[RunResult], path: Path) -> None:
     """One row per channel, so a sweep can be compared at a glance."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    frame = _metrics_frame([(r.channel, r.eval_result) for r in results])
+    frame = _metrics_frame(
+        [(result.channel, result.eval_result) for result in results]
+    )
     frame.to_csv(path, index=False)
     logger.info(
         'Wrote summary of {n} channels to {path}', n=len(results), path=path
