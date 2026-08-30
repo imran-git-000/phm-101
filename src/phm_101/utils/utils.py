@@ -100,15 +100,25 @@ def build_parser() -> argparse.ArgumentParser:
         description='Train and evaluate an unsupervised bearing fault detector.',
     )
     parser.add_argument(
-        '--channel',
-        default=None,
-        help="channel to run, or 'all' for every IMS channel "
-        '(default: the channel in the config file)',
+        '--mode',
+        choices=('train', 'test', 'train-all', 'test-all'),
+        default='train',
+        help='train: fit and evaluate one channel from the config. '
+        'test: evaluate one channel from a checkpoint. '
+        'train-all: fit and evaluate a model per channel. '
+        'test-all: evaluate every channel from one checkpoint. '
+        '(default: train)',
     )
     parser.add_argument(
-        '--model-path',
+        '--channel',
+        default=None,
+        choices=[channel.value for channel in ImsChannel],
+        help='channel for train and test (default: the one in the config)',
+    )
+    parser.add_argument(
+        '--checkpoint',
         type=Path,
         default=None,
-        help='score with this checkpoint instead of training a new model',
+        help='checkpoint to score with; required by test and test-all',
     )
     return parser

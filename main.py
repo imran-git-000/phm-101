@@ -1,16 +1,22 @@
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
 from loguru import logger
 
 from phm_101.config.configs import ConfigLoader
+from phm_101.data_types.enums import ImsChannel
 from phm_101.pipeline import Pipeline
 from phm_101.utils.utils import build_parser
 
-if TYPE_CHECKING:
-    from phm_101.data_types.models import RunResult
+
+def _require_checkpoint(checkpoint: Path | None, mode: str) -> Path:
+    """The two scoring modes have no weights without one."""
+    if checkpoint is None:
+        raise SystemExit(f'--mode {mode} needs --checkpoint')
+    if not checkpoint.is_file():
+        raise SystemExit(f'no checkpoint at {checkpoint}')
+    return checkpoint
 
 
 def main() -> None:
@@ -29,22 +35,34 @@ def main() -> None:
         artifacts_dir=artifacts_dir,
         checkpoints_dir=checkpoints_dir,
     )
+    channel = ImsChannel(args.channel) if args.channel else None
 
-    channel = args.channel or config.data_config.channel
-    if channel == 'all':
-        if args.model_path is not None:
-            raise SystemExit(
-                '--model-path takes a single checkpoint, so it cannot be '
-                'combined with --channel all'
+    match args.mode:
+        case 'train':
+            # fit and evaluate one channel, everything from the config
+            result = pipeline.run(channel=channel, checkpoint_path=None)
+        case 'test':
+            # evaluate one channel with weights that already exist
+            result = pipeline.run(
+                channel=channel,
+                checkpoint_path=_require_checkpoint(
+                    args.checkpoint, args.mode
+                ),
             )
-        results = pipeline.run_all()
-        logger.info('Finished {n} channels', n=len(results))
-        return
+        case 'train-all':
+            # one model per channel, each fitted on its own data
+            pipeline.train_all()
+            return
+        case 'test-all':
+            # one checkpoint scored against every channel
+            pipeline.run_all(
+                checkpoint_path=_require_checkpoint(args.checkpoint, args.mode)
+            )
+            return
 
-    result: RunResult = pipeline.run(channel=channel, model_path=args.model_path)
     logger.info(
         'Finished {channel}: {metrics}',
-        channel=channel,
+        channel=result.channel.value,
         metrics=result.eval_result.metrics,
     )
 

@@ -167,7 +167,9 @@ class Pipeline:
             test_dataloader=test_loader,
         ).evaluate()
 
-        output_dir = self._output_dir(channel=channel)
+        output_dir = self._output_dir(
+            channel=channel, checkpoint_path=checkpoint_path
+        )
         self._write_artifacts(
             channel=channel,
             eval_result=eval_result,
@@ -186,7 +188,7 @@ class Pipeline:
             train_result=train_result,
         )
 
-    def train_all(self, summary_path: Path) -> list[RunResult]:
+    def train_all(self) -> None:
         """Train and evaluate one model per channel, each on its own data."""
         results: list[RunResult] = []
         for channel in self.all_channels:
@@ -197,12 +199,11 @@ class Pipeline:
                     'Skipping {channel}', channel=channel.value
                 )
         if results:
-            reporting.write_summary(results=results, path=summary_path)
-        return results
+            reporting.write_summary(
+                results=results, path=self._summary_path(checkpoint_path=None)
+            )
 
-    def run_all(
-        self, checkpoint_path: Path, summary_path: Path
-    ) -> list[RunResult]:
+    def run_all(self, checkpoint_path: Path) -> None:
         """Run every IMS channel and write a table comparing them."""
         results: list[RunResult] = []
         for channel in self.all_channels:
@@ -215,8 +216,10 @@ class Pipeline:
                     'Skipping {channel}', channel=channel.value
                 )
         if results:
-            reporting.write_summary(results=results, path=summary_path)
-        return results
+            reporting.write_summary(
+                results=results,
+                path=self._summary_path(checkpoint_path=checkpoint_path),
+            )
 
     def _write_artifacts(
         self,
@@ -247,10 +250,23 @@ class Pipeline:
         stem = Path(self.config.training_config.checkpoint_name).stem
         return self.checkpoints_dir / f'{stem}_{channel.value}.pt'
 
-    def _output_dir(self, channel: ImsChannel) -> Path:
-        """Keep a transfer run's artifacts apart from the channel's own run."""
+    def _output_dir(
+        self, channel: ImsChannel, checkpoint_path: Path | None
+    ) -> Path:
+        source = 'self' if checkpoint_path is None else checkpoint_path.stem
         return (
             self.artifacts_dir
             / self.config.evaluation_config.output_artifacts
+            / source
             / channel.value
+        )
+
+    def _summary_path(self, checkpoint_path: Path | None) -> Path:
+        """Next to the runs it summarises, so the two sweeps stay apart."""
+        source = 'self' if checkpoint_path is None else checkpoint_path.stem
+        return (
+            self.artifacts_dir
+            / self.config.evaluation_config.output_artifacts
+            / source
+            / 'summary.csv'
         )
