@@ -19,7 +19,9 @@ training:
   patience: 5 # early stopping; 0 disables it
   device: cuda # auto | cpu | cuda
   seed: 42 # null disables seeding
+  checkpoint_name: ims_t2b1_conv1dae.pt
 
 evaluation:
   aggregation: mean # mean | max over a snapshot's windows
   quantile: 0.99 # threshold percentile on healthy validation scores
+  output_artifacts: ims_t2b1_conv1dae

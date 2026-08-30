@@ -118,6 +118,7 @@ class TrainConfig:
     patience: int  # early stopping; 0 disables it
     device: str
     seed: int
+    checkpoint_name: str
 
 
 @dataclass
@@ -140,6 +141,7 @@ class EvalConfig:
 
     aggregation: Aggregation
     quantile: float  # threshold percentile on healthy validation scores
+    output_artifacts: str
 
     def __post_init__(self) -> None:
         self.aggregation = Aggregation(self.aggregation)
