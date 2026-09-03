@@ -272,7 +272,7 @@ class Pipeline:
         )
 
     def _summary_path(self, checkpoint_path: Path | None) -> Path:
-        """Next to the runs it summarises, so the two sweeps stay apart."""
+        """Configure summarization path"""
         source = 'self' if checkpoint_path is None else checkpoint_path.stem
         return (
             self.artifacts_dir
